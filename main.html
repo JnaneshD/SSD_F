@@ -1,0 +1,443 @@
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+  
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Image annotation</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/cropper/2.3.4/cropper.min.css'>
+  
+<style>
+	#my_camera{
+			display: none;
+			
+		}
+	.image{
+		max-width: 200px;
+		max-height: 200px;
+		border: 3px solid white;
+	}
+	.image:hover{
+		border: 3px solid black;
+	}
+	.page {
+		margin-left: 10%;
+		display: flex;
+		align-items: flex-start;
+		flex-wrap: wrap;
+		height: 100%;
+	}
+
+	.box {
+		padding: 0.5em;
+		width: 100%;
+	}
+
+	.box-2 {
+		padding: 0.5em;
+		width: 100%;
+	}
+
+	.options label,
+	.options input{
+		width:4em;
+		padding:0.5em 1em;
+	}
+	.btn{
+		background:white;
+		color:black;
+		border:1px solid black;
+		padding: 0.5em 1em;
+		text-decoration:none;
+		margin:0.8em 0.3em;
+		display:inline-block;
+		cursor:pointer;
+	}
+
+	.hide {
+		display: none;
+	}
+
+	img {
+		max-width: 100%;
+	}
+	.logo {
+		width: 50px;
+		max-width : 60px;
+		margin-right: 20px;
+		margin-left: 20px;
+		max-height: 150px;
+	}
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin: auto;
+  margin-left: 45%;
+  position: absolute;
+  top : 40%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}	
+</style>
+</head>
+
+<body translate="no" style="background-image: url(whitebackground.jpg); ">
+	<script type="text/javascript" src="webcam.min.js"></script>
+	<script language="JavaScript">
+		$(window).on("load",function(){
+		//     $(".loader-wrapper").fadeOut("slow");
+			$("#loader").removeClass("loader");
+			$("#mainpage").removeClass("hide");
+		});
+		
+	</script>
+	<!-- Image and text -->
+	<nav class="navbar navbar-light bg-light">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="#">
+		<img src="https://previews.123rf.com/images/dragomirescu/dragomirescu1708/dragomirescu170800677/84889040-sj-s-j-letter-logo-combination-alphabet.jpg" alt="" width="30" height="24" class="d-inline-block align-top">
+		PW21SBN05
+		</a>
+	</div>
+	</nav>
+<div class="loader" id="loader">
+	</div>
+  <main class="page jumbotron hide" id="mainpage">
+	
+	<h1 class="display-4">Upload ,Crop and Detect Objects</h2>
+	<div class="box">
+	<div id="my_camera"></div>
+	<img src="https://i.pinimg.com/originals/51/fe/9e/51fe9e8d3b63808b192d5392d68f5637.png" onClick="configure()" class="logo">
+	<input type=button value="Take Snapshot" class="btn btn-outline-primary hide" id="snapshotbutton" onClick="take_snapshot()">
+
+	<!-- input file -->
+	<h2 style="display: inline;">OR </h2>
+
+	<button class="btn btn-outline-primary" onClick="upload_1()">Upload a file</button>
+	<input type="file" id="file-input" accept="image/*" hidden/>
+	<!-- leftbox -->
+	<div class="box-2">
+		<div class="result"></div>
+	</div>
+
+	
+	
+	
+	
+	
+	<div class="box">
+		<div class="options hide">
+			<input type="number" class="img-w" value="300" min="100" max="1200" />
+		</div>
+		<button class="btn save hide">Detect</button>
+		<a href="" class="btn download hide">Detect</a>
+	</div>
+
+
+	<div class="box-2 img-result hide" id="show-res">
+		<!-- result of crop -->
+		<img id="cropped1" alt="">
+		<table class="table table-hover" id="table">
+			<thead>
+				<tr>
+				<th scope="col">Image</th>
+				<th scope="col">Object name</th>
+				<th scope="col" style="max-width: 450px;">Description</th>
+				<th scope="col">Links</th>
+				</tr>
+			</thead>
+			<tbody id="table-body">
+				
+			</tbody>
+			</table>
+	</div>
+	
+</main>
+    <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-157cd5b220a5c80d4ff8e0e70ac069bffd87a61252088146915e8726e5d9f147.js"></script>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/cropperjs/0.8.1/cropper.min.js'></script>
+     
+ <script id="rendered-js" >
+// vars
+let result = document.querySelector('.result'),
+img_result = document.querySelector('.img-result'),
+img_w = document.querySelector('.img-w'),
+img_h = document.querySelector('.img-h'),
+options = document.querySelector('.options'),
+save = document.querySelector('.save'),
+cropped = document.getElementById('cropped1'),
+dwn = document.querySelector('.download'),
+upload = document.querySelector('#file-input'),
+snapshot = document.getElementById("snapshotbutton"),
+table = document.getElementById("table"),
+tbody = document.getElementById("table-body");
+// on change show image with crop options
+
+function upload_1()
+{
+	document.getElementById('file-input').click();
+}
+
+function google_new_tab(search)
+{
+	window.open("https://www.google.com/search?q="+search, "_blank");
+}
+
+function goto_new_tab(search)
+{
+	window.open(search,"_blank");
+}
+
+upload.addEventListener('change', e => {
+  if (e.target.files.length) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (e.target.result) {
+        // create new image
+        let img = document.createElement('img');
+        img.id = 'image';
+        img.src = e.target.result;
+        // clean result before
+        result.innerHTML = '';
+        // append new image
+        result.appendChild(img);
+        // show save btn and options
+        save.classList.remove('hide');
+        // init cropper
+		tbody.innerHTML = '';
+        cropper = new Cropper(img);
+      }
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  }
+});
+
+// save on click
+save.addEventListener('click', e => {
+	e.preventDefault();
+	// get result to data uri
+	let imgSrc = cropper.getCroppedCanvas({
+	}).toDataURL();
+	// remove hide class of img
+	img_result.classList.remove('hide');
+	// show image cropped
+	var logo = new Image();
+	logo.src = imgSrc;
+	cropped.src = imgSrc;
+	cropped.style = "display : none";
+	var formData = new FormData();
+		formData.append("file", imgSrc);
+		xhr = new XMLHttpRequest();
+		var url = 'http://localhost:5000/detect';
+		$("#loader").addClass("loader");
+		$("#mainpage").addClass("hide");
+		$.ajax({
+
+			url: "http://localhost:5000/detect",
+			data: formData,
+			cache: false,
+			processData: false,
+			contentType: false,
+			type: 'POST',
+			
+			success: function (dataofconfirm) {
+				$("#loader").removeClass("loader");
+				$("#mainpage").removeClass("hide");
+				// do something with the result
+				for(key in dataofconfirm)
+				{
+					if(dataofconfirm.hasOwnProperty(key))
+					{
+
+						var rectangle = dataofconfirm[key];
+						console.log(rectangle);
+						coord = rectangle.split(",");
+						var tr = document.createElement("tr");
+						tr.id = key;
+						var image_new = document.createElement("img");
+						image_new.src = "https://raw.githubusercontent.com/JnaneshD/SSDimages/main/"+key+".png";
+						var td = document.createElement("td");
+						td.style = "width : 250px;";
+						td.appendChild(image_new);
+						tr.appendChild(td);
+						var td_name = document.createElement("td");
+						var object_name = document.createElement("h2");
+						object_name.innerHTML = key.match(/[a-zA-Z]+/g);
+						td_name.appendChild(object_name);
+						tr.appendChild(td_name);
+						tbody.appendChild(tr);
+						image_new.id = key+'image';
+						image_new.className = "image";
+						image_new.addEventListener("click",e => {
+							var xhr = new XMLHttpRequest();
+							document.getElementById(e.target.id).style = "pointer-events : none;";
+							try{							
+							xhr.onreadystatechange = function()
+							{
+								if (this.readyState == 4 && this.status == 200) {
+									// Typical action to be performed when the document is ready:
+									//document.getElementById("demo").innerHTML = xhttp.responseText;
+									
+									console.log(this.responseText);
+									var reponse_json = JSON.parse(this.responseText);
+									var ent = reponse_json.best_guess_labels;
+									var descrip = reponse_json.web_entities.Description[0];
+									var splitimage = e.target.id.split("image")[0]
+									var tr = document.getElementById(splitimage);
+									var ul = document.createElement("div");
+									var a_tag = document.createElement("button");
+									a_tag.setAttribute("onclick","javascript:google_new_tab('"+ent+"');");
+									a_tag.setAttribute("target","_blank");
+									a_tag.className="btn btn-primary";
+									a_tag.style = "display: inline";
+									a_tag.innerHTML = ent;
+									var a_tag1 = document.createElement("button");
+									a_tag1.setAttribute("onclick","javascript:google_new_tab('"+descrip+"');");
+									a_tag1.setAttribute("target","_blank");
+									a_tag1.className="btn btn-primary";
+									a_tag1.style = "display: block";
+									a_tag1.innerHTML = descrip;
+									if(ent!="")
+									{
+										ul.appendChild(a_tag);
+									}
+									if(descrip!="")
+									{
+										ul.appendChild(a_tag1);
+									}
+									p_tag = document.createElement("p");
+									p_tag.innerHTML = reponse_json.wiki;
+									p_tag.style = "max-width: 450px";
+									ul.appendChild(p_tag);
+									/*
+									for(var i=0;i<entities.length;i++)
+									{
+										
+										var descr = entities[i];
+										if(descr!="")
+										{
+											var a_tag = document.createElement("button");
+											a_tag.setAttribute("onclick","javascript:google_new_tab('"+descr+"');");
+											a_tag.setAttribute("target","_blank");
+											a_tag.className="btn btn-primary";
+											a_tag.style = "display: block";
+											a_tag.innerHTML = descr;
+											ul.appendChild(a_tag);
+										}
+									}
+									*/
+									var td_description = document.createElement("td")
+									td_description.appendChild(ul);
+									var td_links = document.createElement("td");
+									var pages = reponse_json.pages_with_matching_images;
+									for(var j=0;j<pages.length;j++)
+									{
+										var website_name = pages[j].split(".")[1];
+										console.log(website_name);
+										var atag = document.createElement("button");
+										atag.setAttribute("onclick","javascript:goto_new_tab('"+pages[j]+"');");
+										atag.setAttribute("target","_blank");
+										atag.className = "btn btn-primary";
+										atag.style = "display: block";
+										atag.innerHTML = "Pages : "+j;
+										td_links.appendChild(atag);
+									}
+									tr.appendChild(td_description);
+									tr.appendChild(td_links);
+									document.getElementById(e.target.id).removeEventListener("click",function(){
+
+									}
+									);
+								}
+								
+							};
+							var imagename = e.target.id.split("image")[0];
+							xhr.open("get","http://sachinsp.pythonanywhere.com/api/"+imagename+".png",true);
+							xhr.send();
+							}
+							catch(e){
+								  alert("Could not reach the server");
+								  console.log('catch', e);
+							}
+
+						});
+					}	
+				}				
+			},
+			fail : function(xhr,textstatus,errorthrown)
+			{
+				alert("Request failed");
+				$("#loader").removeClass("loader");
+			}
+		});
+		return false;
+
+});
+
+function configure(){
+	var div = document.getElementById("my_camera");
+	div.style.display = "block";
+	div.style.width = "250px";
+	Webcam.set({
+		width: 320,
+		height: 240,
+		image_format: 'jpeg',
+		jpeg_quality: 90
+	});
+	snapshotbutton.classList.remove("hide");
+	Webcam.attach('#my_camera' );
+}
+// A button for taking snaps
+
+function take_snapshot() {
+	Webcam.snap( function(data_uri) {
+	// display results in page
+	let img = document.createElement('img');
+	img.id = 'image';
+	img.src = data_uri;
+	Webcam.reset();
+	result.innerHTML = '';
+	// append new image
+	result.appendChild(img);
+	// show save btn and options
+	save.classList.remove('hide');
+	// init cropper
+	cropper = new Cropper(img);
+		} );
+		upload.src = data_uri;
+		save.classList.remove('hide');
+	Webcam.reset();
+	var divv = document.getElementById("my_camera");
+	divv.className = "hide";
+	divv.style.display = "none";
+	
+}
+ </script>
+
+  
+</body>
+
+</html>
+ 
